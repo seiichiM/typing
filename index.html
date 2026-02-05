@@ -1043,20 +1043,24 @@
             tokens.push(token);
         }
 
-        // Post-processing for 'っ' (Sokuon) and 'ん' (N)
+        // Post-processing for 'っ' (Sokuon)
         for (let j = 0; j < tokens.length; j++) {
             const t = tokens[j];
             const nextT = tokens[j + 1];
 
             // Special handling for Sokuon 'っ'
             if (t.kana === 'っ' && nextT) {
-                // Add the first char of valid patterns of the next token
-                // e.g. next is 'ka', add 'k' to 'っ' patterns
-                const nextFirstChars = new Set();
+                // Determine the characters to repeat (e.g., 'k' for 'ka', 's' for 'shi')
+                const repeatChars = [];
                 nextT.patterns.forEach(p => {
-                    if (p.length > 0) nextFirstChars.add(p[0]);
+                    const firstChar = p[0];
+                    // Do not repeat vowels or 'n', 'y' (except special cases, but generally consonants)
+                    if (firstChar && !['a','i','u','e','o','n'].includes(firstChar)) {
+                        if (!repeatChars.includes(firstChar)) repeatChars.push(firstChar);
+                    }
                 });
-                t.patterns.push(...nextFirstChars);
+                // Put the repeated character at the BEGINNING so it becomes the default hint
+                t.patterns = [...repeatChars, ...t.patterns];
             }
         }
 
