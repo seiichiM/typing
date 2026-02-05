@@ -70,9 +70,10 @@
             border-radius: 5px;
             transition: transform 0.1s, box-shadow 0.1s;
             margin-top: 20px;
+            outline: none;
         }
 
-        button:hover {
+        button:hover, button:focus {
             transform: scale(1.05);
             box-shadow: 0 0 15px var(--highlight-color);
         }
@@ -181,11 +182,21 @@
             text-align: center;
         }
 
-        /* Keyboard hint (optional) */
         .keyboard-hint {
-            margin-top: 50px;
+            margin-top: 30px;
             font-size: 0.9rem;
-            color: #555;
+            color: #888;
+        }
+        
+        .key-badge {
+            display: inline-block;
+            background: #333;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border-bottom: 2px solid #111;
+            margin: 0 5px;
+            font-family: monospace;
         }
 
     </style>
@@ -207,6 +218,7 @@
         <h1>TYPING MASTER</h1>
         <p>Limit: 60 Seconds / Word Set: Common Japanese (Top 2000 rules applied)</p>
         <button id="start-btn">GAME START</button>
+        <p class="keyboard-hint">Press <span class="key-badge">Space</span> or <span class="key-badge">Enter</span> to Start</p>
         <div class="ranking-list" id="top-ranking">
             <!-- Ranking populated by JS -->
             <p>Loading ranking...</p>
@@ -226,7 +238,7 @@
             <div id="display-romaji" class="romaji"></div>
         </div>
 
-        <div class="keyboard-hint">Type the Romaji exactly as shown</div>
+        <div class="keyboard-hint">Type the Romaji exactly as shown <br> Press <span class="key-badge">Esc</span> to Quit</div>
     </div>
 
     <!-- Result Screen -->
@@ -248,15 +260,13 @@
         
         <button id="retry-btn">Try Again</button>
         <button id="home-btn" style="background-color: #555;">Back to Title</button>
+        <p class="keyboard-hint">Press <span class="key-badge">Space</span> to Retry / <span class="key-badge">Esc</span> to Title</p>
     </div>
 </div>
 
 <script>
     /**
      * 単語リスト
-     * JLPT N5-N3レベルの頻出単語を中心に、複数のデータベース(BCCWJ, Wikipedia等)で
-     * 上位にランクインするであろう単語を厳選しています。
-     * ここに2000語まで追加可能です。
      */
     const wordList = [
         // Greetings & Basics
@@ -268,8 +278,7 @@
         { word: "日本", kana: "にほん", romaji: "nihon" },
         { word: "学生", kana: "がくせい", romaji: "gakusei" },
         { word: "先生", kana: "せんせい", romaji: "sensei" },
-        
-        // Verbs (Basic)
+        // ... (Keep existing extensive list - abbreviated for brevity in this replace but fully kept in logic)
         { word: "食べる", kana: "たべる", romaji: "taberu" },
         { word: "飲む", kana: "のむ", romaji: "nomu" },
         { word: "見る", kana: "みる", romaji: "miru" },
@@ -361,8 +370,6 @@
         { word: "浴びる", kana: "あびる", romaji: "abiru" },
         { word: "疲れる", kana: "つかれる", romaji: "tsukareru" },
         { word: "驚く", kana: "おどろく", romaji: "odoroku" },
-
-        // Adjectives
         { word: "大きい", kana: "おおきい", romaji: "ookii" },
         { word: "小さい", kana: "ちいさい", romaji: "chiisai" },
         { word: "高い", kana: "たかい", romaji: "takai" },
@@ -429,8 +436,6 @@
         { word: "柔らかい", kana: "やわらかい", romaji: "yawarakai" },
         { word: "硬い", kana: "かたい", romaji: "katai" },
         { word: "珍しい", kana: "めずらしい", romaji: "mezurashii" },
-
-        // Nouns - Daily Life
         { word: "時間", kana: "じかん", romaji: "jikan" },
         { word: "電話", kana: "でんわ", romaji: "denwa" },
         { word: "電車", kana: "でんしゃ", romaji: "densha" },
@@ -455,8 +460,6 @@
         { word: "魚", kana: "さかな", romaji: "sakana" },
         { word: "野菜", kana: "やさい", romaji: "yasai" },
         { word: "果物", kana: "くだもの", romaji: "kudamono" },
-        
-        // Food & Drink
         { word: "牛乳", kana: "ぎゅうにゅう", romaji: "gyuunyuu" },
         { word: "卵", kana: "たまご", romaji: "tamago" },
         { word: "朝ご飯", kana: "あさごはん", romaji: "asagohan" },
@@ -471,8 +474,6 @@
         { word: "箸", kana: "はし", romaji: "hashi" },
         { word: "皿", kana: "さら", romaji: "sara" },
         { word: "コップ", kana: "こっぷ", romaji: "koppu" },
-
-        // Body & Health
         { word: "頭", kana: "あたま", romaji: "atama" },
         { word: "顔", kana: "かお", romaji: "kao" },
         { word: "目", kana: "め", romaji: "me" },
@@ -493,8 +494,6 @@
         { word: "喉", kana: "のど", romaji: "nodo" },
         { word: "胸", kana: "むね", romaji: "mune" },
         { word: "腰", kana: "こし", romaji: "koshi" },
-
-        // House & Daily
         { word: "玄関", kana: "げんかん", romaji: "genkan" },
         { word: "台所", kana: "だいどころ", romaji: "daidokoro" },
         { word: "お風呂", kana: "おふろ", romaji: "ofuro" },
@@ -520,8 +519,6 @@
         { word: "洗濯", kana: "せんたく", romaji: "sentaku" },
         { word: "掃除", kana: "そうじ", romaji: "souji" },
         { word: "買い物", kana: "かいもの", romaji: "kaimono" },
-
-        // City & Places
         { word: "駅", kana: "えき", romaji: "eki" },
         { word: "空港", kana: "くうこう", romaji: "kuukou" },
         { word: "地下鉄", kana: "ちかてつ", romaji: "chikatetsu" },
@@ -542,8 +539,6 @@
         { word: "薬局", kana: "やっきょく", romaji: "yakkyoku" },
         { word: "コンビニ", kana: "こんびに", romaji: "kombini" },
         { word: "スーパー", kana: "すーぱー", romaji: "suupaa" },
-
-        // Nature & Season
         { word: "春", kana: "はる", romaji: "haru" },
         { word: "夏", kana: "なつ", romaji: "natsu" },
         { word: "秋", kana: "あき", romaji: "aki" },
@@ -558,8 +553,6 @@
         { word: "林", kana: "はやし", romaji: "hayashi" },
         { word: "石", kana: "いし", romaji: "ishi" },
         { word: "虫", kana: "むし", romaji: "mushi" },
-
-        // Colors
         { word: "赤", kana: "あか", romaji: "aka" },
         { word: "青", kana: "あお", romaji: "ao" },
         { word: "白", kana: "しろ", romaji: "shiro" },
@@ -571,8 +564,6 @@
         { word: "紫", kana: "むらさき", romaji: "murasaki" },
         { word: "金", kana: "きん", romaji: "kin" },
         { word: "銀", kana: "ぎん", romaji: "gin" },
-
-        // Directions & Positions
         { word: "上", kana: "うえ", romaji: "ue" },
         { word: "下", kana: "した", romaji: "shita" },
         { word: "右", kana: "みぎ", romaji: "migi" },
@@ -588,8 +579,6 @@
         { word: "西", kana: "にし", romaji: "nishi" },
         { word: "南", kana: "みなみ", romaji: "minami" },
         { word: "北", kana: "きた", romaji: "kita" },
-
-        // Occupations
         { word: "医者", kana: "いしゃ", romaji: "isha" },
         { word: "看護師", kana: "かんごし", romaji: "kangoshi" },
         { word: "警察官", kana: "けいさつかん", romaji: "keisatsukan" },
@@ -600,8 +589,6 @@
         { word: "作家", kana: "さっか", romaji: "sakka" },
         { word: "社長", kana: "しゃちょう", romaji: "shachou" },
         { word: "社員", kana: "しゃいん", romaji: "shain" },
-
-        // Stationery & School
         { word: "教科書", kana: "きょうかしょ", romaji: "kyoukasho" },
         { word: "消しゴム", kana: "けしごむ", romaji: "keshigomu" },
         { word: "鋏", kana: "はさみ", romaji: "hasami" },
@@ -612,8 +599,6 @@
         { word: "宿題", kana: "しゅくだい", romaji: "shukudai" },
         { word: "授業", kana: "じゅぎょう", romaji: "jugyou" },
         { word: "試験", kana: "しけん", romaji: "shiken" },
-
-        // Traffic
         { word: "信号", kana: "しんごう", romaji: "shingou" },
         { word: "横断歩道", kana: "おうだんほどう", romaji: "oudanhodou" },
         { word: "角", kana: "かど", romaji: "kado" },
@@ -625,8 +610,6 @@
         { word: "タクシー", kana: "たくしー", romaji: "takushii" },
         { word: "船", kana: "ふね", romaji: "fune" },
         { word: "飛行機", kana: "ひこうき", romaji: "hikouki" },
-
-        // Adverbs & Conjunctions & Time
         { word: "いつも", kana: "いつも", romaji: "itsumo" },
         { word: "たぶん", kana: "たぶん", romaji: "tabun" },
         { word: "とても", kana: "とても", romaji: "totemo" },
@@ -651,8 +634,6 @@
         { word: "去年", kana: "きょねん", romaji: "kyonen" },
         { word: "毎日", kana: "まいにち", romaji: "mainichi" },
         { word: "誕生日", kana: "たんじょうび", romaji: "tanjoubi" },
-
-        // Katakana Words
         { word: "テレビ", kana: "てれび", romaji: "terebi" },
         { word: "ラジオ", kana: "らじお", romaji: "rajio" },
         { word: "ニュース", kana: "にゅーす", romaji: "nyuusu" },
@@ -676,8 +657,6 @@
         { word: "エアコン", kana: "えあこん", romaji: "eakon" },
         { word: "エレベーター", kana: "えれべーたー", romaji: "erebeetaa" },
         { word: "エスカレーター", kana: "えすかれーたー", romaji: "esukareetaa" },
-
-        // Nouns - Abstract & Society (Remaining)
         { word: "意味", kana: "いみ", romaji: "imi" },
         { word: "問題", kana: "もんだい", romaji: "mondai" },
         { word: "答え", kana: "こたえ", romaji: "kotae" },
@@ -705,8 +684,6 @@
         { word: "力", kana: "ちから", romaji: "chikara" },
         { word: "気持ち", kana: "きもち", romaji: "kimochi" },
         { word: "気分", kana: "きぶん", romaji: "kibun" },
-        
-        // Nature & Animals (Remaining)
         { word: "猫", kana: "ねこ", romaji: "neko" },
         { word: "犬", kana: "いぬ", romaji: "inu" },
         { word: "鳥", kana: "とり", romaji: "tori" },
@@ -720,8 +697,6 @@
         { word: "牛", kana: "うし", romaji: "ushi" },
         { word: "猿", kana: "さる", romaji: "saru" },
         { word: "象", kana: "ぞう", romaji: "zou" },
-        
-        // Advanced / Business (Remaining)
         { word: "確認", kana: "かくにん", romaji: "kakunin" },
         { word: "連絡", kana: "れんらく", romaji: "renraku" },
         { word: "報告", kana: "ほうこく", romaji: "houkoku" },
@@ -734,7 +709,114 @@
         { word: "予約", kana: "よやく", romaji: "yoyaku" },
         { word: "約束", kana: "やくそく", romaji: "yakusoku" },
         { word: "出発", kana: "しゅっぱつ", romaji: "shuppatsu" },
-        { word: "到着", kana: "とうちゃく", romaji: "touchaku" }
+        { word: "到着", kana: "とうちゃく", romaji: "touchaku" },
+        { word: "助ける", kana: "たすける", romaji: "tasukeru" },
+        { word: "戦う", kana: "たたかう", romaji: "tatakau" },
+        { word: "勝つ", kana: "かつ", romaji: "katsu" },
+        { word: "負ける", kana: "まける", romaji: "makeru" },
+        { word: "投げる", kana: "なげる", romaji: "nageru" },
+        { word: "打つ", kana: "うつ", romaji: "utsu" },
+        { word: "守る", kana: "まもる", romaji: "mamoru" },
+        { word: "攻める", kana: "せめる", romaji: "semeru" },
+        { word: "祈る", kana: "いのる", romaji: "inoru" },
+        { word: "願う", kana: "ねがう", romaji: "negau" },
+        { word: "宇宙", kana: "うちゅう", romaji: "uchuu" },
+        { word: "地球", kana: "ちきゅう", romaji: "chikyuu" },
+        { word: "環境", kana: "かんきょう", romaji: "kankyou" },
+        { word: "法律", kana: "ほうりつ", romaji: "houritsu" },
+        { word: "政治", kana: "せいじ", romaji: "seiji" },
+        { word: "歴史", kana: "れきし", romaji: "rekishi" },
+        { word: "文化", kana: "ぶんか", romaji: "bunka" },
+        { word: "芸術", kana: "げいじゅつ", romaji: "geijutsu" },
+        { word: "音楽", kana: "おんがく", romaji: "ongaku" },
+        { word: "科学", kana: "かがく", romaji: "kagaku" },
+        { word: "激しい", kana: "はげしい", romaji: "hageshii" },
+        { word: "優しい", kana: "やさしい", romaji: "yasashii" },
+        { word: "賢い", kana: "かしこい", romaji: "kashikoi" },
+        { word: "鋭い", kana: "するどい", romaji: "surudoi" },
+        { word: "深い", kana: "ふかい", romaji: "fukai" },
+        { word: "浅い", kana: "あさい", romaji: "asai" },
+        { word: "会議", kana: "かいぎ", romaji: "kaigi" },
+        { word: "資料", kana: "しりょう", romaji: "shiryou" },
+        { word: "契約", kana: "けいやく", romaji: "keiyaku" },
+        { word: "産業", kana: "さんぎょう", romaji: "sangyou" },
+        { word: "開発", kana: "かいはつ", romaji: "kaihatsu" },
+        { word: "研究", kana: "けんきゅう", romaji: "kenkyuu" },
+        { word: "調査", kana: "ちょうさ", romaji: "chousa" },
+        { word: "原因", kana: "げんいん", romaji: "genin" },
+        { word: "可能", kana: "かのう", romaji: "kanou" },
+        { word: "未来", kana: "みらい", romaji: "mirai" },
+        { word: "過去", kana: "かこ", romaji: "kako" },
+        { word: "現在", kana: "げんざい", romaji: "genzai" },
+        { word: "教育", kana: "きょういく", romaji: "kyouiku" },
+        { word: "健康", kana: "けんこう", romaji: "kenkou" },
+        { word: "自由", kana: "じゆう", romaji: "jiyuu" },
+        { word: "権利", kana: "けんり", romaji: "kenri" },
+        { word: "義務", kana: "ぎむ", romaji: "gimu" },
+        { word: "責任", kana: "せきにん", romaji: "sekinin" },
+        { word: "努力", kana: "どりょく", romaji: "doryoku" },
+        { word: "協力", kana: "きょうりょく", romaji: "kyouryoku" },
+        { word: "参加", kana: "さんか", romaji: "sanka" },
+        { word: "反対", kana: "はんたい", romaji: "hantai" },
+        { word: "賛成", kana: "さんせい", romaji: "sansei" },
+        { word: "意見", kana: "いけん", romaji: "iken" },
+        { word: "議論", kana: "ぎろん", romaji: "giron" },
+        { word: "結論", kana: "けつろん", romaji: "ketsuron" },
+        { word: "説明", kana: "せつめい", romaji: "setsumei" },
+        { word: "紹介", kana: "しょうかい", romaji: "shoukai" },
+        { word: "案内", kana: "あんない", romaji: "annai" },
+        { word: "注意", kana: "ちゅうい", romaji: "chuui" },
+        { word: "安心", kana: "あんしん", romaji: "anshin" },
+        { word: "不安", kana: "ふあん", romaji: "fuan" },
+        { word: "満足", kana: "まんぞく", romaji: "manzoku" },
+        { word: "感謝", kana: "かんしゃ", romaji: "kansha" },
+        { word: "感動", kana: "かんどう", romaji: "kandou" },
+        { word: "興奮", kana: "こうふん", romaji: "koufun" },
+        { word: "緊張", kana: "きんちょう", romaji: "kinchou" },
+        { word: "興味", kana: "きょうみ", romaji: "kyoumi" },
+        { word: "関心", kana: "かんしん", romaji: "kanshin" },
+        { word: "期待", kana: "きたい", romaji: "kitai" },
+        { word: "希望", kana: "きぼう", romaji: "kibou" },
+        { word: "絶望", kana: "ぜつぼう", romaji: "zetsubou" },
+        { word: "勇気", kana: "ゆうき", romaji: "yuuki" },
+        { word: "恐怖", kana: "きょうふ", romaji: "kyoufu" },
+        { word: "友情", kana: "ゆうじょう", romaji: "yuujou" },
+        { word: "愛情", kana: "あいじょう", romaji: "aijou" },
+        { word: "幸福", kana: "こうふく", romaji: "koufuku" },
+        { word: "不幸", kana: "ふこう", romaji: "fukou" },
+        { word: "平等", kana: "びょうどう", romaji: "byoudou" },
+        { word: "公平", kana: "こうへい", romaji: "kouhei" },
+        { word: "差別", kana: "さべつ", romaji: "sabetsu" },
+        { word: "戦争", kana: "せんそう", romaji: "sensou" },
+        { word: "犯罪", kana: "はんざい", romaji: "hanzai" },
+        { word: "裁判", kana: "さいばん", romaji: "saiban" },
+        { word: "警察", kana: "けいさつ", romaji: "keisatsu" },
+        { word: "消防", kana: "しょうぼう", romaji: "shoubou" },
+        { word: "救急", kana: "きゅうきゅう", romaji: "kyuukyuu" },
+        { word: "治療", kana: "ちりょう", romaji: "chiryou" },
+        { word: "手術", kana: "しゅじゅつ", romaji: "shujutsu" },
+        { word: "入院", kana: "にゅういん", romaji: "nyuuin" },
+        { word: "退院", kana: "たいいん", romaji: "taiin" },
+        { word: "栄養", kana: "えいよう", romaji: "eiyou" },
+        { word: "運動", kana: "うんどう", romaji: "undou" },
+        { word: "睡眠", kana: "すいみん", romaji: "suimin" },
+        { word: "休憩", kana: "きゅうけい", romaji: "kyuukei" },
+        { word: "休日", kana: "きゅうじつ", romaji: "kyuujitsu" },
+        { word: "旅行", kana: "りょこう", romaji: "ryokou" },
+        { word: "観光", kana: "かんこう", romaji: "kankou" },
+        { word: "温泉", kana: "おんせん", romaji: "onsen" },
+        { word: "お土産", kana: "おみやげ", romaji: "omiyage" },
+        { word: "祭り", kana: "まつり", romaji: "matsuri" },
+        { word: "花火", kana: "はなび", romaji: "hanabi" },
+        { word: "紅葉", kana: "こうよう", romaji: "kouyou" },
+        { word: "桜", kana: "さくら", romaji: "sakura" },
+        { word: "卒業", kana: "そつぎょう", romaji: "sotsugyou" },
+        { word: "入学", kana: "にゅうがく", romaji: "nyuugaku" },
+        { word: "就職", kana: "しゅうしょく", romaji: "shuushoku" },
+        { word: "転職", kana: "てんしょく", romaji: "tenshoku" },
+        { word: "退職", kana: "たいしょく", romaji: "taishoku" },
+        { word: "給料", kana: "きゅうりょう", romaji: "kyuuryou" },
+        { word: "ボーナス", kana: "ぼーなす", romaji: "boonasu" }
     ];
 
     // --- Romaji Logic & Data ---
@@ -821,24 +903,56 @@
             document.getElementById('top-ranking').innerHTML = '<p>Ranking unavailable (Offline)</p>';
         }
 
-        // Event Listeners
+        // Event Listeners (Mouse)
         document.getElementById('start-btn').addEventListener('click', startGame);
         document.getElementById('retry-btn').addEventListener('click', startGame);
         document.getElementById('home-btn').addEventListener('click', showStartScreen);
         document.getElementById('save-rank-btn').addEventListener('click', saveScore);
     });
     
-    // Main Game Input
+    // Main Game & Navigation Input
     window.addEventListener('keydown', (e) => {
-        if (!isPlaying) return;
-        
-        // Ignore modifier keys
-        if (e.key.length > 1) return;
+        // Global Navigation
+        const startActive = screens.start.classList.contains('active');
+        const resultActive = screens.result.classList.contains('active');
 
-        // Prevent space scrolling etc.
-        if(e.key === " ") e.preventDefault();
+        // Ignore if user is typing in the name input (except Enter)
+        if (document.activeElement === resultDisplay.input) {
+            if (e.key === 'Enter') {
+                saveScore();
+            }
+            return; // Don't trigger other shortcuts
+        }
 
-        handleInput(e.key);
+        if (startActive) {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault(); // Prevent scrolling
+                startGame();
+            }
+        } else if (resultActive) {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                startGame(); // Retry
+            } else if (e.key === 'Escape') {
+                showStartScreen();
+            }
+        } else if (isPlaying) {
+            // Game Controls
+            if (e.key === 'Escape') {
+                // Quit game
+                isPlaying = false;
+                clearInterval(timerInterval);
+                showStartScreen();
+                return;
+            }
+            
+            // Typing Logic
+            if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                // Prevent Space scrolling in game
+                if(e.key === " ") e.preventDefault();
+                handleInput(e.key);
+            }
+        }
     });
 
     function showScreen(screenName) {
@@ -944,11 +1058,6 @@
                 });
                 t.patterns.push(...nextFirstChars);
             }
-
-            // Optional: 'ん' usually requires 'nn', but 'n' is allowed if next is not vowel/n/y etc.
-            // For simplicity in this game, we stick to explicit inputs or 'n'+next consonant logic if we wanted.
-            // Current table has 'nn', 'xn', "n'". "n" single usage is complex (e.g. kani -> ka, ni vs kan, i).
-            // We leave 'ん' as 'nn' primarily.
         }
 
         return tokens;
@@ -963,19 +1072,24 @@
                 html += `<span class="typed">${token.input}</span>`;
             } else if (idx === currentTokenIndex) {
                 // Current token logic
-                // Show what user typed so far (buffer) + hint of remaining chars from the SHORTEST matching pattern
                 const validPatterns = token.patterns.filter(p => p.startsWith(currentInputBuffer));
-                // Sort by length to show the shortest completion hint
-                validPatterns.sort((a, b) => a.length - b.length);
                 
-                const bestMatch = validPatterns[0] || token.patterns[0]; // fallback
-                const remaining = bestMatch.substring(currentInputBuffer.length);
+                let bestMatch;
+                if (currentInputBuffer.length === 0) {
+                     // Force Hepburn (first pattern) initially when buffer is empty
+                     bestMatch = token.patterns[0];
+                } else {
+                     // Find shortest remaining match for valid hints
+                     validPatterns.sort((a, b) => a.length - b.length);
+                     bestMatch = validPatterns[0] || token.patterns[0];
+                }
+                
+                const remaining = bestMatch ? bestMatch.substring(currentInputBuffer.length) : '';
 
                 html += `<span class="typed">${currentInputBuffer}</span>`;
                 html += `<span class="current ${isError ? 'error' : ''}">${remaining}</span>`;
             } else {
-                // Future tokens
-                // Just show the first pattern as default hint
+                // Future tokens - Default to Hepburn (first pattern)
                 html += `<span>${token.patterns[0]}</span>`;
             }
         });
@@ -1070,21 +1184,21 @@
                 { name: "ROOKIE", score: 500, date: getDateString() },
                 { name: "BEGINNER", score: 100, date: getDateString() }
             ];
-            // Only try saving if we think it might work, or just let it fail silently in saveRankingData
+            // Only try saving if we think it might work
             saveRankingData();
         }
         updateRankingDisplay();
     }
 
     function checkRanking(currentScore) {
-        // Sort current ranking just in case
         ranking.sort((a, b) => b.score - a.score);
         
-        // Check if score is higher than the 5th place
+        // Check if score is higher than the 5th place or list is empty
         if (ranking.length < 5 || currentScore > ranking[ranking.length - 1].score) {
             resultDisplay.form.style.display = 'block';
             resultDisplay.input.value = '';
-            resultDisplay.input.focus();
+            // Auto focus
+            setTimeout(() => resultDisplay.input.focus(), 100);
         } else {
             resultDisplay.form.style.display = 'none';
         }
@@ -1106,7 +1220,7 @@
         
         resultDisplay.form.style.display = 'none';
         alert("Score Saved!");
-        showStartScreen(); // Go back to start to see ranking
+        showStartScreen(); 
     }
 
     function saveRankingData() {
